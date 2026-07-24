@@ -28,12 +28,11 @@ jobs:
     - name: Ensure no changes
       run: git diff --exit-code
 
+  # This package targets Cloudflare Browser Rendering, which is headless
+  # Chromium on Linux — so we only install and test that browser, rather than
+  # Microsoft's full chrome/msedge/firefox/webkit × ubuntu/macos/windows matrix.
   test:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js 18
@@ -45,15 +44,11 @@ jobs:
     - name: Install dependencies
       run: npm ci
     - name: Playwright install
-      run: npx playwright install --with-deps
-    - name: Install MS Edge
-      # MS Edge is not preinstalled on macOS runners.
-      if: ${{ matrix.os == 'macos-latest' }}
-      run: npx playwright install msedge
+      run: npx playwright install --with-deps chromium
     - name: Build
       run: npm run build
     - name: Run tests
-      run: npm test
+      run: npm test -- --project=chromium
 
   test_docker:
     runs-on: ubuntu-latest
