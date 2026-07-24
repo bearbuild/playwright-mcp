@@ -19,8 +19,12 @@ jobs:
     - name: Install dependencies
       run: npm ci
     - run: npm run build
+    # Run the real linters directly instead of `npm run lint`, which chains
+    # `update-readme` — Microsoft's tool-doc generator for Microsoft's README
+    # structure. This fork maintains its own README, so that generator can't find
+    # its expected (options) markers and fails. eslint + tsc are the actual gates.
     - name: Run ESLint
-      run: npm run lint
+      run: npx eslint . && npx tsc --noEmit
     - name: Ensure no changes
       run: git diff --exit-code
 
