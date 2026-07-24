@@ -1,0 +1,64 @@
+name: "playwright-mcp (bearbuild) — Publish to GitHub Packages"
+
+# Publishes @bearbuild/playwright-mcp (built from the cloudflare/ subdir) to the
+# GitHub Packages npm registry. Triggered by a GitHub Release (tag = version) or
+# manually via workflow_dispatch with an explicit version.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 1.0.0)"
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@bearbuild"
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+            VERSION="${VERSION#v}"
+          else
+            echo "❌ Unexpected trigger: ${GITHUB_REF}"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing version: $VERSION"
+
+      # Base deps must be installed at the repo root so the workerd Vite build can
+      # bundle the base runtime deps (debug, mime, …) reachable from ../src.
+      - name: Install root (base) deps
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+
+      - name: Build the Cloudflare/workerd bundle
+        run: |
+          cd cloudflare
+          npm version "${{ steps.version.outputs.VERSION }}" --no-git-tag-version
+          npm run build
+
+      - name: Publish to GitHub Packages
+        run: |
+          cd cloudflare
+          cp ../README.md .
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

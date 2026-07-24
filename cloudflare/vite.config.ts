@@ -36,6 +36,11 @@ export default defineConfig({
       'node:fs': '@cloudflare/playwright/fs',
       'fs': '@cloudflare/playwright/fs',
 
+      // The base uses zod-to-json-schema@3 (zod v3); the workerd host bundles zod
+      // v4, which that package mis-converts (→ 0 tools discovered). Swap in a
+      // zod-v4-native shim for this build only — see ./src/zod-to-json-schema.ts.
+      'zod-to-json-schema': path.resolve(__dirname, './src/zod-to-json-schema.ts'),
+
       './package.js': path.resolve(__dirname, './src/package.ts'),
     },
   },
@@ -107,7 +112,6 @@ export default defineConfig({
         'agents/mcp',
         'yaml',
         'zod',
-        'zod-to-json-schema',
       ]
     },
     commonjsOptions: {
