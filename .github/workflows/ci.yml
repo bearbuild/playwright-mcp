@@ -48,7 +48,11 @@ jobs:
     - name: Build
       run: npm run build
     - name: Run tests
-      run: npm test -- --project=chromium
+      # --project=chromium runs the Chromium suite; grep-invert drops the one
+      # test that explicitly launches Firefox to exercise the `browserName`
+      # config option (tests/config.spec.ts) — not applicable to our
+      # Chromium-only (Browser Rendering) target, and we don't install Firefox.
+      run: npm test -- --project=chromium --grep-invert "browserName"
 
   test_docker:
     runs-on: ubuntu-latest
