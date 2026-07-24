@@ -25,12 +25,15 @@ The published package is built from the `cloudflare/` subdir and is renamed to
    *This folds in what was previously carried downstream as
    `patches/@cloudflare%2Fplaywright-mcp@0.0.5.patch` in the Hearth monorepo.*
 
-2. **zod v4 native JSON-Schema conversion** (`src/connection.ts`). The Workers
-   host bundles zod v4; the previously-used `zod-to-json-schema@3` only understands
-   zod v3 internals and silently emits schemas with no `type`/`properties`, so the
-   MCP client rejects every tool and discovery yields 0 tools. Tool input schemas
-   are now converted with zod v4's native `z.toJSONSchema(schema, { target:
-   'draft-2020-12' })`. The `zod-to-json-schema` dependency is dropped.
+2. **zod v4 native JSON-Schema conversion** (Cloudflare build only). The Workers
+   host bundles zod v4; the base's `zod-to-json-schema@3` only understands zod v3
+   internals and silently emits schemas with no `type`/`properties`, so the MCP
+   client rejects every tool and discovery yields 0 tools. The base source is left
+   untouched (so the Microsoft base's own tsc/lint/test CI still resolves the real
+   zod-v3 `zod-to-json-schema`); instead `cloudflare/vite.config.ts` **aliases**
+   `zod-to-json-schema` to a zod-v4-native shim (`cloudflare/src/zod-to-json-schema.ts`,
+   `z.toJSONSchema(schema, { target: 'draft-2020-12' })`) for the workerd bundle
+   only.
 
 3. **Dependency bumps** (`cloudflare/package.json`): `@cloudflare/playwright`
    `^0.0.11 → ^1.3.0`, `agents` `^0.0.109 → ^0.19.0`,

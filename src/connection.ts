@@ -16,7 +16,7 @@
 
 import { Server as McpServer } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, Tool as McpTool } from '@modelcontextprotocol/sdk/types.js';
-import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import { Context } from './context.js';
 import { snapshotTools, visionTools } from './tools.js';
@@ -25,17 +25,6 @@ import { packageJSON } from './package.js';
 import { FullConfig } from './config.js';
 
 import type { BrowserContextFactory } from './browserContextFactory.js';
-
-// This package runs on the Cloudflare Workers runtime, where the host bundles
-// zod v4 (its native draft-2020-12 JSON-Schema converter). The previously used
-// `zod-to-json-schema@3` only understands zod v3 internals — handed a v4 schema
-// it silently emits `{ "$schema": ... }` with no `type`/`properties`, so the MCP
-// client rejects every tool (its ToolSchema requires inputSchema.type ===
-// "object") and discovery yields 0 tools. Use zod v4's native converter, which
-// produces the correct shape.
-function zodToJsonSchema(schema: Parameters<typeof z.toJSONSchema>[0]) {
-  return z.toJSONSchema(schema, { target: 'draft-2020-12' });
-}
 
 export function createConnection(config: FullConfig, browserContextFactory: BrowserContextFactory): Connection {
   const allTools = config.vision ? visionTools : snapshotTools;
