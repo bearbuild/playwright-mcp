@@ -40,6 +40,24 @@ The published package is built from the `cloudflare/` subdir and is renamed to
    `@modelcontextprotocol/sdk` `^1.17.0 → ^1.29.0`, add `zod ^4`, add the base
    runtime deps that the workerd bundle inlines (`debug`, `mime`, `commander`).
 
+4. **`fs` resolves to `node:fs`, not `@cloudflare/playwright/fs`**
+   (`cloudflare/vite.config.ts`). Upstream aliased both `fs` and `node:fs` onto
+   the `./fs` subpath of `@cloudflare/playwright` — a bundled memfs the 0.0.x line
+   shipped because workerd had no `node:fs` at the time. **1.x removed that
+   subpath** and calls `node:fs` directly, so the alias left the published package
+   importing a specifier that no longer exists: every consuming worker failed to
+   bundle on `Could not resolve "@cloudflare/playwright/fs"` (the bundler can't
+   drop it — it's a real import in `lib/`). Aliasing anywhere other than `node:fs`
+   would also split this server off from the Playwright runtime's filesystem: the
+   two `fs` call sites create output directories (`outputFile()` in `config.ts`,
+   `_createUserDataDir()`) that Playwright itself then writes the screenshot/PDF
+   into through `node:fs`.
+
+   **Consumer requirement:** `nodejs_compat` plus a `compatibility_date` >=
+   `2025-09-01`, where workerd serves `node:fs` from its virtual filesystem by
+   default (earlier dates need the `enable_nodejs_fs_module` flag). The example
+   worker's `compatibility_date` is bumped to match.
+
 The Microsoft base under `src/` is unchanged from the upstream sync point
 (`@playwright/mcp@0.0.30`) except for change (2). A separate effort tracks syncing
 the base forward (Microsoft is at 0.0.78).

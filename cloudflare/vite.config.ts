@@ -15,6 +15,16 @@ export default defineConfig({
       'crypto': 'node:crypto',
       'dns': 'node:dns',
       'events': 'node:events',
+      // workerd serves `node:fs` from its own virtual filesystem (nodejs_compat +
+      // a compatibility date >= 2025-09-01). This used to map to
+      // `@cloudflare/playwright/fs` — a memfs bundle the 0.0.x line exported
+      // because workerd had no `node:fs` back then. @cloudflare/playwright 1.x
+      // dropped that subpath and calls `node:fs` itself, so mapping to it now
+      // fails to resolve at bundle time in the consuming worker, and mapping it
+      // anywhere but `node:fs` would put this server on a DIFFERENT filesystem
+      // than the Playwright runtime that writes the screenshots/PDFs whose
+      // output directories it creates.
+      'fs': 'node:fs',
       'http': 'node:http',
       'http2': 'node:http2',
       'https': 'node:https',
@@ -33,8 +43,6 @@ export default defineConfig({
 
       'playwright-core': '@cloudflare/playwright',
       'playwright': '@cloudflare/playwright/test',
-      'node:fs': '@cloudflare/playwright/fs',
-      'fs': '@cloudflare/playwright/fs',
 
       // The base uses zod-to-json-schema@3 (zod v3); the workerd host bundles zod
       // v4, which that package mis-converts (→ 0 tools discovered). Swap in a
@@ -86,6 +94,7 @@ export default defineConfig({
         'node:crypto',
         'node:dns',
         'node:events',
+        'node:fs',
         'node:http',
         'node:http2',
         'node:https',
@@ -105,7 +114,6 @@ export default defineConfig({
 
         '@cloudflare/playwright',
         '@cloudflare/playwright/test',
-        '@cloudflare/playwright/fs',
         'cloudflare:workers',
 
         /@modelcontextprotocol\/sdk\/.*/,

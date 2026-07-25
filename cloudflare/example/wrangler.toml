@@ -1,6 +1,9 @@
 name = "playwright-mcp-example"
 main = "src/index.ts"
-compatibility_date = "2025-03-10"
+# >= 2025-09-01 so workerd serves `node:fs` by default — this server creates its
+# screenshot/PDF output directory through it. On an earlier compatibility date,
+# add the `enable_nodejs_fs_module` flag instead.
+compatibility_date = "2025-09-15"
 compatibility_flags = ["nodejs_compat"]
 
 [browser]
