@@ -1,6 +1,6 @@
 {
   "name": "@bearbuild/playwright-mcp",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Cloudflare Playwright Tools for MCP (bearbuild fork)",
   "type": "module",
   "repository": {
@@ -8,9 +8,6 @@
     "url": "git+https://github.com/bearbuild/playwright-mcp.git"
   },
   "homepage": "https://playwright.dev",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "engines": {
     "node": ">=18"
   },
